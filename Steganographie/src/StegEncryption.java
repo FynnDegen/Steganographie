@@ -38,14 +38,14 @@ public class StegEncryption {
 		        gruen = Integer.toBinaryString(argb).substring(16, 23) + "0";
 		        blau = Integer.toBinaryString(argb).substring(24, 31) + "0";
 		        
-		        //temp.setRGB(x, y, argb);
-		        
+		        temp.setRGB(x, y, argb);
+		        /*
 		        for(int y2 = 0; y2 < 8; y2++) {
 		        	for(int x2 = 0; x2 < 8; x2++) {
 		        		temp.setRGB(x+x2, y+y2, argb);
 		        		//System.out.println(temp.getRGB(x+x2, y+y2));
 		        	}
-		        }
+		        }*/
 		    }
 		}
 		

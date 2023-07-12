@@ -1,4 +1,3 @@
-import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -7,50 +6,53 @@ import javax.imageio.ImageIO;
 
 public class StegEncryption {
 	
-	static File original, template;
-	static BufferedImage image, temp;
-	static File f;
+	static BufferedImage image; // Original
+	static BufferedImage temp; // verschluesseltes Bild
 	static String alpha, rot, gruen, blau;
 	
 	public static void main(String[] args) {
-		existDir();
-    	encrypt();
-    	//System.out.print(alpha + "\n" + rot + "\n" + gruen + "\n" + blau);
-    }
-	
-	public static void encrypt() {
 		
-		original = new File("/Users/fynn/git/Steganographie/Steganographie/src/Screenshot (981).png");
-		template = new File("/Users/fynn/git/Steganographie/Steganographie/src/testa.png");
-    	try {
-			image = ImageIO.read(original);
-			temp = ImageIO.read(template);
-			existImage();
+		try {
+			image = ImageIO.read(new File("/Users/fynn/git/Steganographie/Steganographie/src/Screenshot (981).png"));
+			temp = ImageIO.read(new File("/Users/fynn/git/Steganographie/Steganographie/src/11729.jpeg"));
 		} catch (IOException e) {
 			System.out.println(e);
 		}
 		
+		System.out.println(image.getWidth() + " " + image.getWidth());
+		System.out.println(temp.getWidth() + " " + temp.getWidth());
+		
+    	encrypt();
+		
+		readPixel();
+    }
+	
+	public static void encrypt() {
+
+    	int tempX = 0;
+    	int tempY = 0;
+    	
 		for (int y = 0; y < image.getHeight(); y++) {
 		    for (int x = 0; x < image.getWidth(); x++) {
-		    	int argb = image.getRGB(x, y);
-		        alpha = Integer.toBinaryString(argb).substring(0, 7) + "0";
-		        rot = Integer.toBinaryString(argb).substring(8, 15) + "0";
-		        gruen = Integer.toBinaryString(argb).substring(16, 23) + "0";
-		        blau = Integer.toBinaryString(argb).substring(24, 31) + "0";
+		    	int originalColour = image.getRGB(x, y);
+		        String origialColourString = Integer.toBinaryString(originalColour).substring(0, 32);
 		        
-		        temp.setRGB(x, y, argb);
-		        /*
-		        for(int y2 = 0; y2 < 8; y2++) {
-		        	for(int x2 = 0; x2 < 8; x2++) {
-		        		temp.setRGB(x+x2, y+y2, argb);
-		        		//System.out.println(temp.getRGB(x+x2, y+y2));
+		        for(int p = 0; p < 32; p++) {
+		        	int tempColour = temp.getRGB(tempX, tempY);
+		        	String tempColourString = Integer.toBinaryString(tempColour).substring(0, 31) + origialColourString.charAt(p);
+		        	
+	        		temp.setRGB(tempX, tempY, Integer.parseUnsignedInt(tempColourString, 2));
+		        	tempX++;
+		        	if(tempX >= temp.getWidth()) {
+		        		tempX = 0;
+		        		tempY++;
 		        	}
-		        }*/
+		        }
 		    }
 		}
-		
+
 		try {
-			ImageIO.write(temp, "png", f);
+			ImageIO.write(temp, "png", createImage());
 		} catch (IOException e) {
 			System.out.println(e);
 		}
@@ -65,8 +67,11 @@ public class StegEncryption {
 		}
 	}
 	
-	public static void existImage() {
+	public static File createImage() {
 		
+		existDir();
+		
+		File f;
 		int num = 0;
 		
 		do {
@@ -78,6 +83,12 @@ public class StegEncryption {
 			f.createNewFile();
 		} catch (Exception e) { }
 		
+		return f;
 	}
-
+	
+	public static void readPixel() {
+		for (int x = 0; x < 32; x++) {
+	    	System.out.println(Integer.toBinaryString(temp.getRGB(x,0)) + " " + Integer.toBinaryString(image.getRGB(0,0)).charAt(x));
+	    }
+	}
 }

@@ -12,7 +12,7 @@ public class StegEncryption {
 	public static void main(String[] args) {
 		
 		try {
-			image = ImageIO.read(new File("/Users/fynn/git/Steganographie/Steganographie/src/Screenshot (981).png"));
+			image = ImageIO.read(new File("/Users/fynn/git/Steganographie/Steganographie/src/idea_DOG_horst_wuppmann.png"));
 			temp = ImageIO.read(new File("/Users/fynn/git/Steganographie/Steganographie/src/testa.png"));
 		} catch (IOException e) {
 			System.out.println(e);
@@ -22,7 +22,6 @@ public class StegEncryption {
 		
     	try {
 			image = ImageIO.read(f);
-			//temp = new BufferedImage(79,83,BufferedImage.TYPE_INT_ARGB);
 		} catch (IOException e) {
 			System.out.println(e);
 		}
@@ -31,6 +30,11 @@ public class StegEncryption {
     }
 	
 	public static File encrypt() {
+		
+		if(!rightImageSize(image, temp)) {
+			System.err.println("Ungenügende Größe");
+			System.exit(-1);
+		}
 
     	int tempX = 0;
     	int tempY = 0;
@@ -79,7 +83,8 @@ public class StegEncryption {
 		for (int y = 0; y < image.getHeight(); y++) {
 		    for (int x = 0; x < image.getWidth(); x++) {
 		    	int originalColour = image.getRGB(x, y);
-		        String origialColourString = Integer.toBinaryString(originalColour).substring(0, 32);
+		        String origialColourString = String.format("%32s", Integer.toBinaryString(originalColour)).replace(' ', '0');
+		        //System.out.println(origialColourString);
 
 		        for(int p = 0; p < 8; p++) {
 		        	int tempColour = temp.getRGB(tempX, tempY);
@@ -236,5 +241,9 @@ public class StegEncryption {
 		} catch (Exception e) { }
 		
 		return f;
+	}
+	
+	public static boolean rightImageSize(BufferedImage image, BufferedImage temp) {
+		return (temp.getWidth()*temp.getHeight()*8+16) >= image.getWidth()*image.getHeight();
 	}
 }

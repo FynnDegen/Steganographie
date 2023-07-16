@@ -6,30 +6,21 @@ import javax.imageio.ImageIO;
 
 public class StegEncryption {
 	
-	static BufferedImage image; // Original
-	static BufferedImage temp; // verschluesseltes Bild
+	File image; // Original
+	File temp; // verschluesseltes Bild
+	File directory = new File("/Users/fynn/git/Steganographie/Steganographie/src/pics");
 	
-	public static void main(String[] args) {
+	public File encrypt() {
+		
+		BufferedImage image = null;
+		BufferedImage temp = null;
 		
 		try {
-			image = ImageIO.read(new File("/Users/fynn/git/Steganographie/Steganographie/src/idea_DOG_horst_wuppmann.png"));
-			temp = ImageIO.read(new File("/Users/fynn/git/Steganographie/Steganographie/src/testa.png"));
+			image = ImageIO.read(this.image);
+			temp = ImageIO.read(this.temp);
 		} catch (IOException e) {
-			System.out.println(e);
+			e.printStackTrace();
 		}
-		
-    	File f = encrypt();
-		
-    	try {
-			image = ImageIO.read(f);
-		} catch (IOException e) {
-			System.out.println(e);
-		}
-    	
-    	decrypt();
-    }
-	
-	public static File encrypt() {
 		
 		if(!rightImageSize(image, temp)) {
 			System.err.println("Ungenügende Größe");
@@ -84,7 +75,6 @@ public class StegEncryption {
 		    for (int x = 0; x < image.getWidth(); x++) {
 		    	int originalColour = image.getRGB(x, y);
 		        String origialColourString = String.format("%32s", Integer.toBinaryString(originalColour)).replace(' ', '0');
-		        //System.out.println(origialColourString);
 
 		        for(int p = 0; p < 8; p++) {
 		        	int tempColour = temp.getRGB(tempX, tempY);
@@ -118,7 +108,15 @@ public class StegEncryption {
 		return null;
 	}
 	
-	public static void decrypt() {
+	public void decrypt() {
+		
+		BufferedImage image = null;
+		
+		try {
+			image = ImageIO.read(this.image);
+		} catch (IOException e) {
+			System.out.println(e);
+		}
 		
     	int tempX = 0;
     	int tempY = 0;
@@ -174,7 +172,7 @@ public class StegEncryption {
 		    }
     	}
     	
-    	temp = new BufferedImage(Integer.parseUnsignedInt(b, 2),Integer.parseUnsignedInt(a, 2),BufferedImage.TYPE_INT_ARGB);
+    	BufferedImage temp = new BufferedImage(Integer.parseUnsignedInt(b, 2),Integer.parseUnsignedInt(a, 2),BufferedImage.TYPE_INT_ARGB);
     	a = b = "";
     	
 	    try {
@@ -217,14 +215,14 @@ public class StegEncryption {
 		System.out.println("Fertig");
 	}
 	
-	public static void existDir() {
+	public void existDir() {
 		File theDir = new File("/Users/fynn/git/Steganographie/Steganographie/src/pics");
 		if (!theDir.exists()){
 		    theDir.mkdirs();
 		}
 	}
 	
-	public static File createImage() {
+	public File createImage() {
 		
 		existDir();
 		
@@ -232,7 +230,7 @@ public class StegEncryption {
 		int num = 0;
 		
 		do {
-			f = new File("/Users/fynn/git/Steganographie/Steganographie/src/pics/img(" + num + ").png");
+			f = new File(this.directory + "/img(" + num + ").png");
 			num++;
 		} while(f.exists());
 		
@@ -243,7 +241,7 @@ public class StegEncryption {
 		return f;
 	}
 	
-	public static boolean rightImageSize(BufferedImage image, BufferedImage temp) {
+	public boolean rightImageSize(BufferedImage image, BufferedImage temp) {
 		return (temp.getWidth()*temp.getHeight()*8+16) >= image.getWidth()*image.getHeight();
 	}
 }

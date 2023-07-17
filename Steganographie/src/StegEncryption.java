@@ -1,14 +1,21 @@
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 
 import javax.imageio.ImageIO;
 
-public class StegEncryption {
+public class StegEncryption implements Serializable {
 	
-	File image; // Original
-	File temp; // verschluesseltes Bild
+	File image = null; // Original
+	File temp = null; // verschluesseltes Bild
 	File directory = new File("/Users/fynn/git/Steganographie/Steganographie/src/pics");
+	
+	public StegEncryption() {
+		
+	}
 	
 	public File encrypt() {
 		
@@ -243,5 +250,19 @@ public class StegEncryption {
 	
 	public boolean rightImageSize(BufferedImage image, BufferedImage temp) {
 		return (temp.getWidth()*temp.getHeight()*8+16) >= image.getWidth()*image.getHeight();
+	}
+	
+	private void writeObject(java.io.ObjectOutputStream s) throws java.io.IOException {
+		s.defaultWriteObject();
+		s.writeObject(image);
+		s.writeObject(temp);
+		s.writeObject(directory);
+	}
+	  
+	private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
+		s.defaultReadObject();
+		this.image = (File) s.readObject();
+		this.temp = (File) s.readObject();
+		this.directory = (File) s.readObject();
 	}
 }

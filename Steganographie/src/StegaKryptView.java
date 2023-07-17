@@ -4,10 +4,14 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -30,10 +34,25 @@ public class StegaKryptView extends JPanel {
 	JPanel encryptPanel1, encryptPanel2;
 	JLabel fileText1 = new JLabel("k.A."), fileText2 = new JLabel("k.A.");
 	JLabel img1Label = new JLabel("k.A."), img2Label = new JLabel("k.A.");
+	
+	JLabel fileText3 = new JLabel("k.A.");
+	JLabel img3Label = new JLabel("k.A.");
+	
+	JLabel footerDirectory;
 
 	public StegaKryptView(StegEncryption model) {
 		
 		this.model = model;
+		
+		try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream("/Users/fynn/git/Steganographie/Steganographie/src/stega.ser"))) {
+			this.model = (StegEncryption) ois.readObject();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
 		
 		this.setLayout(new BorderLayout(10,0));
 		
@@ -47,37 +66,82 @@ public class StegaKryptView extends JPanel {
 		
 		cardLayout = new CardLayout();
 		
-		recent = new JPanel(new GridLayout(50,1));
-		recent.setSize(100,100);
-		recent.add(new JLabel("n"));
-		recent.add(new JLabel("naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
-		
-		add(recent, BorderLayout.WEST);
+//		recent = new JPanel(new GridLayout(50,1));
+//		recent.setSize(100,100);
+//		recent.add(new JLabel("n"));
+//		recent.add(new JLabel("naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+//		
+//		add(recent, BorderLayout.WEST);
 		
 		cards = new JPanel(cardLayout);
 
 		add(cards, BorderLayout.CENTER);
 		
+		// -------------- c0
+		
+		createMenuBarMainCard();
+		
 		// -------------- c1
 		
-		JPanel c1 = new JPanel(new GridLayout(2,1));
-		
-		JButton b3 = new JButton("Bild entschlüsseln");
-		b3.addActionListener(new StegaKryptController(this) {
-			public void actionPerformed(ActionEvent ev) {
-		    	model.image = createFileChooser(new JFrame());
-		    	model.decrypt();
-		    }
-		});
-		
-		c1.add(b3);
+		createMenuBarEncryptCard();
 		
 		// --------------- c2
 		
-		JPanel c2 = new JPanel(new GridLayout(2,2));
+		createMenuBarDecryptCard();
 		
-		JButton b1 = new JButton("Bild verschlüsseln");
+		
+		cardLayout.show(cards, "c0");
+		
+	}
+	
+	public void createMenuBarMainCard() {
+		JPanel c0 = new JPanel(new GridLayout(2,1));
+		
+		JButton encryptButton = new JButton("Verschlüsseln");
+		encryptButton.addActionListener(new StegaKryptController(this) {
+			@Override
+			public void actionPerformed(ActionEvent ev) {
+				cardLayout.show(cards, "c1");
+		    }
+		});
+		
+		JButton decryptButton = new JButton("Entschlüsseln");
+		decryptButton.addActionListener(new StegaKryptController(this) {
+			@Override
+			public void actionPerformed(ActionEvent ev) {
+				cardLayout.show(cards, "c2");
+		    }
+		});
+		
+		c0.add(encryptButton);
+		c0.add(decryptButton);
+		
+		cards.add(c0, "c0");
+	}
+	
+	public void createMenuBarEncryptCard() {
+		
+		JPanel p1 = new JPanel(new GridLayout(2,1));
+		JPanel p2 = new JPanel(new GridLayout(1,2));
+		
+		p2.add(img1Label);
+		p2.add(img2Label);
+		
+		p1.add(p2);
+		
+		JPanel p3 = new JPanel(new BorderLayout());
+		JPanel p4 = new JPanel(new GridLayout(1,2));
+		
+		p3.add(p4, BorderLayout.CENTER);
+		
+		p1.add(p2);
+		p1.add(p3);
+		
+		JPanel c1 = p1;
+		
+		JButton b1 = new JButton("Bild auswählen");
 		b1.addActionListener(new StegaKryptController(this) {
+			@Override
 			public void actionPerformed(ActionEvent ev) {
 				model.image = createFileChooser(new JFrame());
 				BufferedImage img = null;
@@ -89,11 +153,11 @@ public class StegaKryptView extends JPanel {
 				Image dimg = img.getScaledInstance(img1Label.getWidth(), img1Label.getHeight(), Image.SCALE_SMOOTH);
 				fileText1.setText(model.image.toString());
 				img1Label.setIcon(new ImageIcon(dimg));
-				c2.validate();
 		    }
 		});
-		JButton b2 = new JButton("Speichermedium");
+		JButton b2 = new JButton("Speichermedium auswählen");
 		b2.addActionListener(new StegaKryptController(this) {
+			@Override
 			public void actionPerformed(ActionEvent ev) {
 				model.temp = createFileChooser(new JFrame());
 				BufferedImage img = null;
@@ -105,28 +169,70 @@ public class StegaKryptView extends JPanel {
 				Image dimg = img.getScaledInstance(img2Label.getWidth(), img2Label.getHeight(), Image.SCALE_SMOOTH);
 				fileText2.setText(model.temp.toString());
 				img2Label.setIcon(new ImageIcon(dimg));
-				c2.validate();
+		    }
+		});
+		JButton encryptButton = new JButton("Verschlüsseln");
+		encryptButton.addActionListener(new StegaKryptController(this) {
+			@Override
+			public void actionPerformed(ActionEvent ev) {
+				model.encrypt();
 		    }
 		});
 		
 		encryptPanel1 = new JPanel(new BorderLayout());
-		encryptPanel1.add(fileText1, BorderLayout.SOUTH);
-		encryptPanel1.add(img1Label, BorderLayout.CENTER);
+		encryptPanel1.add(fileText1, BorderLayout.NORTH);
+		encryptPanel1.add(b1, BorderLayout.CENTER);
 		
 		encryptPanel2 = new JPanel(new BorderLayout());
-		encryptPanel2.add(fileText2, BorderLayout.SOUTH);
-		encryptPanel2.add(img2Label, BorderLayout.CENTER);
+		encryptPanel2.add(fileText2, BorderLayout.NORTH);
+		encryptPanel2.add(b2, BorderLayout.CENTER);
 		
-		c2.add(encryptPanel1);
-		c2.add(encryptPanel2);
-		c2.add(b1);
-		c2.add(b2);
+		
+		p4.add(encryptPanel1);
+		p4.add(encryptPanel2);
+		p3.add(encryptButton, BorderLayout.SOUTH);
 		
 		cards.add(c1, "c1");
+	}
+	
+	public void createMenuBarDecryptCard() {
+		JPanel c2 = new JPanel(new GridLayout(2,1));
+		
+		JButton b1 = new JButton("Bild auswählen");
+		b1.addActionListener(new StegaKryptController(this) {
+			public void actionPerformed(ActionEvent ev) {
+		    	model.image = createFileChooser(new JFrame());
+				BufferedImage img = null;
+				try {
+					img = ImageIO.read(model.image);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				Image dimg = img.getScaledInstance(img3Label.getWidth(), img3Label.getHeight(), Image.SCALE_SMOOTH);
+				fileText3.setText(model.image.toString());
+				img3Label.setIcon(new ImageIcon(dimg));
+		    }
+		});
+		JButton decryptButton = new JButton("Entschlüsseln");
+		decryptButton.addActionListener(new StegaKryptController(this) {
+			public void actionPerformed(ActionEvent ev) {
+		    	model.decrypt();
+		    }
+		});
+		
+		encryptPanel1 = new JPanel(new BorderLayout());
+		encryptPanel2 = new JPanel(new BorderLayout());
+		encryptPanel2.add(fileText3, BorderLayout.NORTH);
+		encryptPanel2.add(b1, BorderLayout.CENTER);
+		
+		encryptPanel1.add(encryptPanel2, BorderLayout.CENTER);
+		
+		encryptPanel1.add(decryptButton, BorderLayout.SOUTH);
+		
+		c2.add(img3Label);
+		c2.add(encryptPanel1);
+		
 		cards.add(c2, "c2");
-		
-		cardLayout.show(cards, "c2");
-		
 	}
 	
 	public void createMenu() {
@@ -175,6 +281,14 @@ public class StegaKryptView extends JPanel {
 		    		@Override
 					public void actionPerformed(ActionEvent ev) {
 		    			model.directory = createDirectoryChooser(f);
+		    			
+		    			try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("/Users/fynn/git/Steganographie/Steganographie/src/stega.ser"))) {
+		    				oos.writeObject(model);
+		    				oos.flush();
+		    			} catch(Exception e) {
+		    				
+		    			}
+		    			footerDirectory.setText(model.directory.toString());
 				    }
 				});
 		    	
@@ -203,8 +317,9 @@ public class StegaKryptView extends JPanel {
 	
 	public void createFooter() {
 		JPanel footer = new JPanel(new BorderLayout());
+		footerDirectory = new JLabel("Speicherort: " + model.directory.toString());
 		footer.add(new JLabel("StegaKrypt 2023"), BorderLayout.WEST);
-		footer.add(new JLabel(model.directory.toString()), BorderLayout.EAST);
+		footer.add(footerDirectory, BorderLayout.EAST);
 		add(footer, BorderLayout.SOUTH);
 	}
 	

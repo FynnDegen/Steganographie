@@ -12,13 +12,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.URISyntaxException;
+import java.security.CodeSource;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
 public class StegaKryptView extends JPanel {
-	
-	//private StegEncryption model;
 	
 	private final StegaKryptView instance = this;
 	
@@ -26,7 +26,7 @@ public class StegaKryptView extends JPanel {
 	
 	JMenuBar menu;
 	JMenu m1, m2, m3;
-	JMenuItem mi1, mi2, mj1;
+	JMenuItem mi1, mi2, mj1, mk1;
 	
 	CardLayout cardLayout;
 	JPanel recent, cards;
@@ -44,10 +44,10 @@ public class StegaKryptView extends JPanel {
 		
 		this.model = model;
 		
-		try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream("/Users/fynn/git/Steganographie/Steganographie/src/stega.ser"))) {
+		try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream(model.getJarPath() + "/stegakrypt.ser"))) {
 			this.model = (StegEncryption) ois.readObject();
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			serializeAll();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
@@ -59,7 +59,6 @@ public class StegaKryptView extends JPanel {
 		createMenu();
 		createCenter();
 		createFooter();
-		
 	}
 	
 	public void createCenter() {
@@ -175,7 +174,13 @@ public class StegaKryptView extends JPanel {
 		encryptButton.addActionListener(new StegaKryptController(this) {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
-				model.encrypt();
+				try {
+					model.encrypt();
+				} catch(IllegalArgumentException e) {
+					JOptionPane.showMessageDialog(null,	"Das Speichermedium muss 16+8x Pixel größer sein, als das Bild!");
+				} catch(NullPointerException e) {
+					JOptionPane.showMessageDialog(null,	"Es werden zwei Bilder benötigt!");
+				}
 		    }
 		});
 		
@@ -216,7 +221,11 @@ public class StegaKryptView extends JPanel {
 		JButton decryptButton = new JButton("Entschlüsseln");
 		decryptButton.addActionListener(new StegaKryptController(this) {
 			public void actionPerformed(ActionEvent ev) {
-		    	model.decrypt();
+		    	try {
+					model.decrypt();
+				} catch (IOException e) {
+					JOptionPane.showMessageDialog(null,	"Bild konnte nicht entschlüsselt werden!");
+				}
 		    }
 		});
 		
@@ -281,14 +290,8 @@ public class StegaKryptView extends JPanel {
 		    		@Override
 					public void actionPerformed(ActionEvent ev) {
 		    			model.directory = createDirectoryChooser(f);
-		    			
-		    			try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("/Users/fynn/git/Steganographie/Steganographie/src/stega.ser"))) {
-		    				oos.writeObject(model);
-		    				oos.flush();
-		    			} catch(Exception e) {
-		    				
-		    			}
 		    			footerDirectory.setText(model.directory.toString());
+		    			serializeAll();
 				    }
 				});
 		    	
@@ -306,6 +309,31 @@ public class StegaKryptView extends JPanel {
 		});
 		
 		m2.add(mj1);
+		
+		mk1 = new JMenuItem("Nutzung");
+		
+		mk1.addActionListener(new StegaKryptController(this) {
+			@Override
+			public void actionPerformed(ActionEvent ev) {
+				JFrame f = new JFrame();
+		    	f.setVisible(true);
+		    	f.setSize(600,400);
+		    	f.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		    	
+		    	JPanel p = new JPanel();
+		    	p.setLayout(new BoxLayout(p, BoxLayout.PAGE_AXIS));
+		    	
+		    	p.add(new JLabel("<html><body>"
+		    			+ "1. Speichermedien muessen mindestens 16 + 8x Pixel groesser sein,<br>als das zu verschluesselnde Bild.<br>"
+		    			+ "2. Auf MacOS-Geraeten fehlen JAR-Dateien unter Umstaenden die benoetigten Berechtigungen, um fehlerfrei zu funktionieren<br>"
+		    			+ "3. Nicht alle Bildformate werden funktionieren (Bildformate die einen Pixel als 32bit speichern funktionieren)<br>"
+		    			+ "</body></html>"));
+		    	
+		    	f.add(p);
+			}
+		});
+		
+		m3.add(mk1);
 		
 		menu.add(m1);
 		menu.add(m2);
@@ -337,7 +365,6 @@ public class StegaKryptView extends JPanel {
     	try {
     		int result = fileChooser.showSaveDialog(f);
         	if(result == JFileChooser.APPROVE_OPTION) {
-        		System.out.println("Select was selected");
         		return fileChooser.getSelectedFile().getAbsoluteFile();
         	} else {
         		return null;
@@ -385,5 +412,15 @@ public class StegaKryptView extends JPanel {
     	} finally {
     		f.dispose();
     	}
+	}
+	
+	public void serializeAll() {
+		try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(model.getJarPath() + "/stegakrypt.ser"))) {
+			oos.writeObject(model);
+			oos.flush();
+		} catch (IOException e) {
+			JOptionPane.showMessageDialog(null,	"StegaKrypt konnte nicht serialisiert werden!");
+			//e.printStackTrace();
+		}
 	}
 }

@@ -1,9 +1,9 @@
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.net.URISyntaxException;
+import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
@@ -11,28 +11,40 @@ public class StegEncryption implements Serializable {
 	
 	File image = null; // Original
 	File temp = null; // verschluesseltes Bild
-	File directory = new File("/Users/fynn/git/Steganographie/Steganographie/src/pics");
+	File directory = new File(getJarPath());
+	
+	transient int progressEnd = 1;
+	transient int progress;
+	
+	HashMap<File, Integer> recentFiles;
 	
 	public StegEncryption() {
 		
 	}
 	
-	public File encrypt() {
+	public File encrypt() throws NullPointerException, IllegalArgumentException {
+		
+		progress = 0;
 		
 		BufferedImage image = null;
 		BufferedImage temp = null;
+		
+		if(this.image == null || this.temp == null) {
+			throw new NullPointerException();
+		}
 		
 		try {
 			image = ImageIO.read(this.image);
 			temp = ImageIO.read(this.temp);
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new NullPointerException();
 		}
 		
 		if(!rightImageSize(image, temp)) {
-			System.err.println("Ungenügende Größe");
-			System.exit(-1);
+			throw new IllegalArgumentException();
 		}
+		
+		progressEnd = temp.getHeight();
 
     	int tempX = 0;
     	int tempY = 0;
@@ -100,6 +112,7 @@ public class StegEncryption implements Serializable {
 		        	}
 		        }
 		    }
+		    progress++;
 		}
 
 		try {
@@ -115,7 +128,7 @@ public class StegEncryption implements Serializable {
 		return null;
 	}
 	
-	public void decrypt() {
+	public void decrypt() throws IOException {
 		
 		BufferedImage image = null;
 		
@@ -207,31 +220,23 @@ public class StegEncryption implements Serializable {
 			    }
 			    xPos = 0;
 			}
-			try {
-				ImageIO.write(temp, "png", createImage());
-			} catch (IOException ex) {
-				System.out.println(ex);
-			}
+			ImageIO.write(temp, "png", createImage());
 		} catch(ArrayIndexOutOfBoundsException e) {
-			try {
-				ImageIO.write(temp, "png", createImage());
-			} catch (IOException ex) {
-				System.out.println(ex);
-			}
+			ImageIO.write(temp, "png", createImage());
 		}
 		System.out.println("Fertig");
 	}
 	
-	public void existDir() {
-		File theDir = new File("/Users/fynn/git/Steganographie/Steganographie/src/pics");
-		if (!theDir.exists()){
-		    theDir.mkdirs();
-		}
-	}
+//	public void existDir() {
+//		File theDir = new File("/Users/fynn/git/Steganographie/Steganographie/src/pics");
+//		if (!theDir.exists()){
+//		    theDir.mkdirs();
+//		}
+//	}
 	
 	public File createImage() {
 		
-		existDir();
+		//existDir();
 		
 		File f;
 		int num = 0;
@@ -264,5 +269,16 @@ public class StegEncryption implements Serializable {
 		this.image = (File) s.readObject();
 		this.temp = (File) s.readObject();
 		this.directory = (File) s.readObject();
+	}
+	
+	public String getJarPath() {
+		try {
+			String s = new File(StegaKryptMain.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath();
+			s = s.replace("/" + s.substring(s.lastIndexOf("/") + 1), "");
+			return s;
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 }
